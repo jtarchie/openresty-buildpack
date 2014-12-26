@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+aws_access_key=$1
+aws_secret_key=$2
+stack=${3-"cedar-14"}
+
+heroku apps:create -s "$stack" -a build-openresty-nginx -b http://github.com/ryandotsmith/null-buildpack.git
+git push heroku master -f
+heroku run ./build/compile "$aws_access_key" "$aws_secret_key" "$stack"
+heroku apps:destroy build-openresty-nginx --confirm build-openresty-nginx

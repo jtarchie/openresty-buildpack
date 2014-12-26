@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+ruby -pi -e "gsub(/listen\s+\d+/, 'listen $PORT')" nginx.conf
+ruby -pi -e "gsub('/dev/stdout', 'stdout')" nginx.conf
+ruby -pi -e "gsub('/dev/stderr', 'stderr')" nginx.conf
+mkfifo stdout
+mkfifo stderr
+cat < stdout &
+cat < stderr &
+nginx -p . -c $(pwd)/nginx.conf
+

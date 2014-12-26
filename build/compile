@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+
+set -o pipefail
+set -eu
+
+build_dir=$(pwd)
+aws_access_key=$1
+aws_secret_key=$2
+stack=$3
+openresty_version=${4-"1.7.7.1"}
+pcre_version=${5-"8.36"}
+s3cmd_version=${6-"1.0.1"}
+
+curl_tar() {
+  declare url="$1"
+  curl -sSL  "$url" | tar -zx
+}
+
+tmp_dir=$build_dir/tmp
+openresty_dir=$tmp_dir/openresty
+mkdir -p "$openresty_dir"
+
+openresty_tar_path="$build_dir/openresty-$stack-$openresty_version.tar.gz"
+
+echo "Downloading openresty"
+curl_tar "http://openresty.org/download/ngx_openresty-$openresty_version.tar.gz"
+export PATH=/sbin:$PATH #NOTE: ldconfig needed by LuaJIT
+
+echo "Downloading pcre"
+curl_tar "ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/pcre-$pcre_version.tar.gz"
+
+echo "Downloading s3cmd"
+curl_tar "https://github.com/s3tools/s3cmd/archive/v$s3cmd_version.tar.gz"
+export PATH=$build_dir/s3cmd-"$s3cmd_version":$PATH
+
+echo "Compiling openresty"
+cd ngx_openresty-"$openresty_version"
+./configure --prefix=/app/openresty --with-pcre="$build_dir/pcre-$pcre_version" --with-http_postgres_module --with-pcre-jit
+make
+make DESTDIR="$tmp_dir" install
+
+echo "Creating openresty archive"
+cd "$tmp_dir"/app
+tar czf "$openresty_tar_path" openresty
+
+echo "Uploading to s3"
+echo "access_key = $aws_access_key" >> "$build_dir"/.s3cfg
+echo "secret_key = $aws_secret_key" >> "$build_dir"/.s3cfg
+s3cmd -P put "$openresty_tar_path" s3://openresty-buildpack

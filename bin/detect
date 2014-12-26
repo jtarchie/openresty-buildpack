@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+build_dir=$1
+
+if [[ -f "$build_dir/nginx.conf" ]]; then
+  echo "OpenResty"
+  exit 0
+else
+  exit 1
+fi

@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+cat <<-EOL
+---
+default_process_types:
+  web: ./start-heroku
+EOL

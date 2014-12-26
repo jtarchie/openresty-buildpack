@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+set -o pipefail
+set -eu
+
+current_dir=$(dirname $0)
+build_dir=$1
+# cache_dir=$2
+# env_dir=$3
+
+openresty_version="1.7.7.1"
+stack=${STACK-"cedar-14"}
+
+curl_tar() {
+  declare url="$1"
+  curl -sSL  "$url" | tar -zx
+}
+
+cp "$current_dir"/../build/runtime/start-heroku "$build_dir"
+chmod +x "$build_dir"/start-heroku
+
+cd "$build_dir"
+curl_tar "https://openresty-buildpack.s3.amazonaws.com/openresty-$stack-$openresty_version.tar.gz"
+
+mkdir -p "$build_dir"/.profile.d
+profiled_path="$build_dir"/.profile.d/openresty.sh
+echo "fullpath=\$HOME/openresty" >> "$profiled_path"
+echo "export PATH=\$fullpath/bin:\$fullpath/nginx/sbin:\$PATH" >> "$profiled_path"
+
+mkdir -p "$build_dir"/logs
