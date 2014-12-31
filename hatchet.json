@@ -1,4 +1,5 @@
 {
   "empty": ["sharpstone/-"],
-  "basic": ["blunt-object/openresty-basic"]
+  "basic": ["blunt-object/openresty-basic"],
+  "db": ["blunt-object/openresty-postgres"]
 }

@@ -3,9 +3,16 @@
 ruby -pi -e "gsub(/listen\s+\d+/, 'listen $PORT')" nginx.conf
 ruby -pi -e "gsub('/dev/stdout', 'stdout')" nginx.conf
 ruby -pi -e "gsub('/dev/stderr', 'stderr')" nginx.conf
+
+if [[ "$DATABASE_URL" != "" ]]; then
+  ruby -ruri -i -e "
+    uri=URI.parse(ENV['DATABASE_URL']);
+    puts gets(nil).gsub(/postgres_server\s+.*?;/m, \"postgres_server #{uri.host}:#{uri.port||5432} dbname=#{uri.path[1..-1]} user=#{uri.user} password=#{uri.password};\")
+  " nginx.conf
+fi
+
 mkfifo stdout
 mkfifo stderr
 cat < stdout &
 cat < stderr &
 nginx -p . -c $(pwd)/nginx.conf
-
