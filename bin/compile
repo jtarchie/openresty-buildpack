@@ -3,18 +3,30 @@
 set -o pipefail
 set -eu
 
-current_dir=$(dirname $0)
+current_dir=$(dirname "$0")
 build_dir=$1
 # cache_dir=$2
-# env_dir=$3
+env_dir=${3-""}
 
-openresty_version="1.7.7.1"
-stack=${STACK-"cedar-14"}
+load_env() {
+  declare name="$1"
+  if [ -f "$env_dir/$name" ]; then
+    cat "$env_dir/$name"
+  fi
+}
 
 curl_tar() {
   declare url="$1"
   curl -sSL  "$url" | tar -zx
 }
+
+openresty_version_env=$(load_env "OPENRESTY_VERSION")
+if [ "$openresty_version_env" == "" ]; then
+  openresty_version="1.7.7.1"
+else
+  openresty_version=$openresty_version_env
+fi
+stack=${STACK-"cedar-14"}
 
 cp "$current_dir"/../build/runtime/start-heroku "$build_dir"
 chmod +x "$build_dir"/start-heroku
