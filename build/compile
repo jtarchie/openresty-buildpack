@@ -13,11 +13,13 @@ s3cmd_version=${6-"1.0.1"}
 
 curl_tar() {
   declare url="$1"
+  old_dir=$(pwd)
+  cd "$build_dir"
   curl -sSL  "$url" | tar -zx
+  cd "$old_dir"
 }
 
-tmp_dir=$build_dir/tmp
-openresty_dir=$tmp_dir/openresty
+openresty_dir=/app/openresty
 mkdir -p "$openresty_dir"
 
 openresty_tar_path="$build_dir/openresty-$stack-$openresty_version.tar.gz"
@@ -34,13 +36,26 @@ curl_tar "https://github.com/s3tools/s3cmd/archive/v$s3cmd_version.tar.gz"
 export PATH=$build_dir/s3cmd-"$s3cmd_version":$PATH
 
 echo "Compiling openresty"
-cd ngx_openresty-"$openresty_version"
-./configure --prefix=/app/openresty --with-pcre="$build_dir/pcre-$pcre_version" --with-http_postgres_module --with-pcre-jit
+cd "$build_dir/ngx_openresty-$openresty_version"
+./configure --prefix=/app/openresty \
+  --with-pcre="$build_dir/pcre-$pcre_version" \
+  --with-http_postgres_module \
+  --with-pcre-jit
 make
-make DESTDIR="$tmp_dir" install
+make DESTDIR=/ install
+
+echo "Downloading luarocks"
+curl_tar "http://luarocks.org/releases/luarocks-2.2.0.tar.gz"
+cd "$build_dir/luarocks-2.2.0"
+./configure --prefix=/app/openresty/luajit \
+  --with-lua=/app/openresty/luajit \
+  --lua-suffix=jit-2.1.0-alpha \
+  --with-lua-include=/app/openresty/luajit/include/luajit-2.1
+make build
+make install
 
 echo "Creating openresty archive"
-cd "$tmp_dir"/app
+cd /app
 tar czf "$openresty_tar_path" openresty
 
 echo "Uploading to s3"
