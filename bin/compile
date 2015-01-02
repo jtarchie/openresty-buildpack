@@ -31,12 +31,23 @@ stack=${STACK-"cedar-14"}
 cp "$current_dir"/../build/runtime/start-heroku "$build_dir"
 chmod +x "$build_dir"/start-heroku
 
+echo "Install OpenResty"
 cd "$build_dir"
 curl_tar "https://openresty-buildpack.s3.amazonaws.com/openresty-$stack-$openresty_version.tar.gz"
 
 mkdir -p "$build_dir"/.profile.d
 profiled_path="$build_dir"/.profile.d/openresty.sh
 echo "fullpath=\$HOME/openresty" >> "$profiled_path"
-echo "export PATH=\$fullpath/bin:\$fullpath/nginx/sbin:\$PATH" >> "$profiled_path"
+echo "export PATH=\$fullpath/bin:\$fullpath/nginx/sbin:\$fullpath/luajit/bin:\$PATH" >> "$profiled_path"
+
+export PATH="$build_dir/openresty/luajit/bin:$PATH"
 
 mkdir -p "$build_dir"/logs
+
+if [ $(ls "$build_dir"/*.rockspec | wc -l) != "0" ]; then
+  echo "Installing LuaRocks"
+  export LUA_PATH="$build_dir/openresty/luajit/share/lua/5.1/?.lua"
+  ruby -pi -e "gsub('/app/openresty','$build_dir/openresty')" "$build_dir/openresty/luajit/share/lua/5.1/luarocks/site_config.lua"
+  ruby -pi -e "gsub('/app/openresty','$build_dir/openresty')" "$build_dir/openresty/luajit/etc/luarocks/config-5.1.lua"
+  luajit-2.1.0-alpha $(which luarocks) install "$build_dir"/*.rockspec
+fi
