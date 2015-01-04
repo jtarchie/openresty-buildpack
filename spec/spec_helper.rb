@@ -11,4 +11,12 @@ RSpec.configure do |config|
   config.mock_with :rspec do |mocks|
     mocks.verify_partial_doubles = true
   end
+
+  def deploy_app(name, &block)
+    app = Hatchet::GitApp.new(
+      name,
+      buildpack_url: 'https://github.com/jtarchie/openresty-buildpack.git')
+
+    app.deploy(&block)
+  end
 end

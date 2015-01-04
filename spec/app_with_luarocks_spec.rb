@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe 'When deploying an app with luarocks dependencies' do
   it 'successfuly serves the endpoint /luarocks' do
-    Hatchet::GitApp.new('openresty-luarocks', buildpack_url: 'https://github.com/jtarchie/openresty-buildpack.git').deploy do |app|
+    deploy_app('openresty-luarocks') do |app|
       sleep(0.1) while !app.deployed?
       expect(app.output).to include 'Installing LuaRocks'
       output = `curl http://#{app.name}.herokuapp.com/luarocks`
