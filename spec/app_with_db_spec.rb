@@ -3,7 +3,7 @@ require 'json'
 
 describe 'When deploying an app with a database' do
   it 'successfuly serves the endpoint /' do
-    Hatchet::Runner.new('openresty-postgres').deploy do |app|
+    Hatchet::GitApp.new('openresty-postgres', buildpack_url: 'https://github.com/jtarchie/openresty-buildpack.git').deploy do |app|
       app.add_database
       expect(`heroku pg:psql -a #{app.name} < dump.sql`).to include 'DROP TABLE'
       output = `curl http://#{app.name}.herokuapp.com`
