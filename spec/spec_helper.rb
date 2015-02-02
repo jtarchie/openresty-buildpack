@@ -15,7 +15,9 @@ RSpec.configure do |config|
   def deploy_app(name, &block)
     app = Hatchet::GitApp.new(
       name,
-      buildpack_url: 'https://github.com/jtarchie/openresty-buildpack.git')
+      buildpack_url: 'https://github.com/jtarchie/openresty-buildpack.git',
+      stack: ENV['STACK'] || 'cedar-14'
+    )
 
     app.deploy(&block)
   end
