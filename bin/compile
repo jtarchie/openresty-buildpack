@@ -26,7 +26,7 @@ if [ "$openresty_version_env" == "" ]; then
 else
   openresty_version=$openresty_version_env
 fi
-stack=${STACK-"cedar-14"}
+stack=${STACK-"cedar"}
 
 cp "$current_dir"/../build/runtime/start-heroku "$build_dir"
 chmod +x "$build_dir"/start-heroku
